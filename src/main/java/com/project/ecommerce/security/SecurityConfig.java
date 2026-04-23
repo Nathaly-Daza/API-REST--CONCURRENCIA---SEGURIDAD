@@ -2,6 +2,7 @@ package com.project.ecommerce.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,7 +32,10 @@ public class SecurityConfig {
             			    "/swagger-ui/**",
             			    "/swagger-ui.html"
             			).permitAll()
-            	    .requestMatchers("/products/**").hasRole("ADMIN")
+            		.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
+            		.requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
+            		.requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
+            		.requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
             	    .requestMatchers("/orders/**").authenticated()
             	    .anyRequest().authenticated()
             	)

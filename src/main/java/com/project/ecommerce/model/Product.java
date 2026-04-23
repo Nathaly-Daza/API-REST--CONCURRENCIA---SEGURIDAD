@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Data // Esto genera getters, setters y toString automáticamente
+@Data 
 public class Product {
 
     @Id
@@ -20,7 +20,7 @@ public class Product {
     @Version // Esto evita la sobreventa (concurrencia optimista)
     private Long version;
     
-    // Añade esto dentro de la clase Product
+    
     private boolean deleted = false; // Para el Soft Delete
 
     @Column(updatable = false)
