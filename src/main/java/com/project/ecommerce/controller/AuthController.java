@@ -1,5 +1,6 @@
 package com.project.ecommerce.controller;
 
+import com.project.ecommerce.dto.LoginRequest;
 import com.project.ecommerce.model.User;
 import com.project.ecommerce.repository.UserRepository;
 import com.project.ecommerce.security.JwtUtil;
@@ -17,19 +18,20 @@ public class AuthController {
 
     // Endpoint para obtener el token
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody Map<String, String> request) {
+    public Map<String, String> login(@RequestBody LoginRequest request) {
 
-        String username = request.get("username");
-        String password = request.get("password");
+        String username = request.username();
+        String password = request.password();
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no existe"));
+            .orElseThrow(() -> new RuntimeException("Usuario no existe"));
 
         if (!user.getPassword().equals(password)) {
-            throw new RuntimeException("Credenciales inválidas");
+            throw new RuntimeException("Contraseña incorrecta");
         }
 
-        String token = jwtUtil.generateToken(username);
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+
         return Map.of("token", token);
     }
     @Autowired
