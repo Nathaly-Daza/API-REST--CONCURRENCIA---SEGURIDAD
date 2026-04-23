@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>E-Commerce Pro - Panel Nathaly</title>
+
+    <!-- Bootstrap REAL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body { background: #f4f6f9; }
+        .sidebar { background: #1e1e2f; color: white; min-height: 100vh; }
+        .nav-link { color: #bbb; cursor: pointer; }
+        .nav-link:hover, .active-tab { color: white !important; }
+        .card-custom { border-radius: 12px; }
+        .loading { text-align:center; padding:20px; }
+    </style>
+</head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <nav class="col-md-2 sidebar p-3">
+            <h4>🛒 Store API</h4>
+            <hr>
+            <div class="nav flex-column">
+                <a class="nav-link active-tab" onclick="showTab('login')">🔑 Login</a>
+                <a class="nav-link" onclick="showTab('inventory')">📦 Productos</a>
+                <a class="nav-link" onclick="showTab('audit')">🕵️ Auditoría</a>
+            </div>
+        </nav>
+
+        <!-- Main -->
+        <main class="col-md-10 p-4">
+
+            <!-- LOGIN -->
+            <section id="login-tab">
+                <div class="card p-4 w-50 card-custom">
+                    <h4>Iniciar sesión</h4>
+                    <input id="userIn" class="form-control mb-2" placeholder="Usuario">
+                    <button class="btn btn-primary w-100" onclick="login()">Entrar</button>
+                    <small id="tokenInfo" class="text-success mt-2"></small>
+                </div>
+            </section>
+
+            <!-- PRODUCTOS -->
+            <section id="inventory-tab" style="display:none;">
+                <div class="d-flex justify-content-between mb-3">
+                    <h4>Productos</h4>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadProducts()">Refrescar</button>
+                </div>
+
+                <div id="productList" class="row"></div>
+                <div id="loading" class="loading d-none">⏳ Cargando...</div>
+            </section>
+
+            <!-- AUDITORIA -->
+            <section id="audit-tab" style="display:none;">
+                <h4>Auditoría</h4>
+                <table class="table table-hover">
+                    <thead>
+                        <tr><th>Fecha</th><th>Usuario</th><th>Acción</th></tr>
+                    </thead>
+                    <tbody id="auditTable"></tbody>
+                </table>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<script>
+	let token = "";
+
+	/* 🔄 CAMBIO DE TABS */
+	function showTab(tabName) {
+	    // Ocultar todas las secciones
+	    document.getElementById("login-tab").style.display = "none";
+	    document.getElementById("inventory-tab").style.display = "none";
+	    document.getElementById("audit-tab").style.display = "none";
+
+	    // Mostrar la elegida
+	    document.getElementById(tabName + "-tab").style.display = "block";
+	    
+	    // Si entramos a productos, cargarlos automáticamente
+	    if(tabName === 'inventory' && token) loadProducts();
+	}
+
+	/* 🔐 LOGIN */
+	async function login() {
+	    const username = document.getElementById("userIn").value;
+	    if(!username) { alert("Escribe un usuario"); return; }
+
+	    try {
+	        const resp = await fetch("/auth/login", {
+	            method: "POST",
+	            headers: {"Content-Type": "application/json"},
+	            body: JSON.stringify({ username: username })
+	        });
+
+	        if (!resp.ok) throw new Error();
+
+	        const data = await resp.json();
+	        token = data.token;
+
+	        document.getElementById("tokenInfo").innerText = "✔ Sesión activa para " + username;
+	        
+	        // Salto automático a productos
+	        showTab("inventory");
+
+	    } catch (err) {
+	        alert("Error en login. Verifica que el servidor esté corriendo.");
+	    }
+	}
+
+	/* 📦 CARGAR PRODUCTOS */
+	async function loadProducts() {
+	    const container = document.getElementById("productList");
+	    container.innerHTML = "⏳ Cargando...";
+
+	    try {
+	        const resp = await fetch("/products", {
+	            headers: { "Authorization": "Bearer " + token }
+	        });
+
+	        const products = await resp.json();
+	        container.innerHTML = ""; // Limpiar
+
+	        products.forEach(p => {
+	            container.innerHTML += `
+	                <div class="col-md-4 mb-3">
+	                    <div class="card p-3 shadow-sm">
+	                        <h5>${p.name}</h5>
+	                        <p class="text-muted">$${p.price} | Stock: ${p.stock}</p>
+	                        <button class="btn btn-success btn-sm" onclick="buy(${p.id})">Comprar</button>
+	                    </div>
+	                </div>`;
+	        });
+	    } catch (err) {
+	        container.innerHTML = "<p class='text-danger'>Error: No tienes permisos o el token expiró.</p>";
+	    }
+	}
+
+	/* 🛒 COMPRA */
+	async function buy(id) {
+	    const user = document.getElementById("userIn").value;
+	    try {
+	        const resp = await fetch(`/test/concurrency?productId=${id}&username=${user}`, {
+	            headers: { "Authorization": "Bearer " + token }
+	        });
+	        if(resp.ok) {
+	            alert("¡Compra procesada! Revisa la consola de STS para ver la concurrencia.");
+	            loadProducts();
+	        }
+	    } catch (err) {
+	        alert("Error en la conexión.");
+	    }
+	}
+
+</script>
+
+</body>
+</html>
