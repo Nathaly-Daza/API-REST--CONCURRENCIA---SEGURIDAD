@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.project.ecommerce.model.User;
 import com.project.ecommerce.repository.UserRepository;
@@ -16,18 +17,15 @@ public class EcommerceApplication {
 	}
 	
 	@Bean
-	CommandLineRunner initDatabase(UserRepository userRepository) {
+	CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
 	    return args -> {
-	        // No crearla dos veces
 	        if (userRepository.findByUsername("nathaly").isEmpty()) {
 	            User user = new User();
 	            user.setUsername("nathaly");
-	            user.setPassword("12345");
+	            user.setPassword(passwordEncoder.encode("12345")); // ¡Encriptar!
 	            user.setRole("ADMIN");
 	            userRepository.save(user);
 	            System.out.println("Usuario inicial 'nathaly' creado.");
-	        } else {
-	            System.out.println("El usuario 'nathaly' ya existe, saltando creación.");
 	        }
 	    };
 	}

@@ -5,6 +5,7 @@ import com.project.ecommerce.model.User;
 import com.project.ecommerce.repository.UserRepository;
 import com.project.ecommerce.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -15,6 +16,11 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+    
+	
+	 // Agrega la inyección:
+	 @Autowired
+	 private PasswordEncoder passwordEncoder;
 
     // Endpoint para obtener el token
     @PostMapping("/login")
@@ -26,10 +32,9 @@ public class AuthController {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new RuntimeException("Usuario no existe"));
 
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Contraseña incorrecta");
         }
-
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
 
         return Map.of("token", token);
@@ -39,6 +44,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestBody User user) {
+    	user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole("CLIENTE"); // Rol por defecto
         userRepository.save(user);
         return "Usuario registrado exitosamente";
