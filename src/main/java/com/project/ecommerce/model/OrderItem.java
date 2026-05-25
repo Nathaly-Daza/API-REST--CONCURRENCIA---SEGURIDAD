@@ -1,5 +1,6 @@
 package com.project.ecommerce.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ public class OrderItem {
 
     @ManyToOne
     @JoinColumn(name = "order_id")
+    @JsonIgnore 
     private Order order;
 
     @ManyToOne
@@ -20,5 +22,5 @@ public class OrderItem {
     private Product product;
 
     private int quantity;
-    private double price; // Precio al momento de la compra
+    private double price;
 }

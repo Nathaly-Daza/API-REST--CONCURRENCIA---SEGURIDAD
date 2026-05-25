@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15
+  postgres:
+    image: postgres:15-alpine
     container_name: ecommerce_db
     environment:
       POSTGRES_DB: ecommerce
@@ -10,3 +10,44 @@ services:
       POSTGRES_PASSWORD: admin
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ecommerce-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_broker
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ecommerce-network
+
+  grafana-lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: observability
+    ports:
+      - "3000:3000"  # Grafana UI
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - ecommerce-network
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  grafana_data:
+
+networks:
+  ecommerce-network:
+    driver: bridge

@@ -1,8 +1,10 @@
+// com.project.ecommerce.model.Order.java
 package com.project.ecommerce.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -19,9 +21,17 @@ public class Order {
     private User user;
 
     private LocalDateTime date = LocalDateTime.now();
-
     private double total;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<OrderItem> items;
+    // NUEVO: Estado de la orden para el Saga
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status = OrderStatus.PENDING;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
+
+    // Método helper
+    public boolean isPending() {
+        return this.status == OrderStatus.PENDING;
+    }
 }
